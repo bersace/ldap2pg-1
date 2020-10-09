@@ -4,8 +4,7 @@
 
 `ldap2pg` accepts a YAML configuration file usually named `ldap2pg.yml` and put
 in working directory. Everything can be configured from the YAML file:
-verbosity, LDAP and Postgres credentials, LDAP queries, privileges and
-mappings.
+verbosity, Postgres inspect queries, LDAP queries, privileges and mappings.
 
 !!! warning
 
@@ -38,8 +37,8 @@ This is helpful to feed `ldap2pg` with dynamic configuration.
 - finally some global parameters (verbosity, etc.).
 
 We provide a simple well commented
-[ldap2pg.yml](https://github.com/dalibo/ldap2pg/blob/master/ldap2pg.yml), tested
-on CI. If you don't know how to begin, it can be a good starting point.
+[ldap2pg.yml](https://github.com/dalibo/ldap2pg/blob/master/ldap2pg.yml),
+tested on CI. If you don't know how to begin, it is a good starting point.
 
 !!! note
 
@@ -65,7 +64,7 @@ can be either a string containing an SQL query or a YAML list to return a
 static list of values.
 
 
-### `dsn`
+### `postgres:dsn`
 
 Specifies a PostgreSQL connexion URI.
 
@@ -80,7 +79,7 @@ postgres:
     readable `ldap2pg.yml`.
 
 
-### `databases_query`
+### `postgres:databases_query`
 
 The SQL query to list databases in the cluster. This defaults to all databases
 connectable, thus including `template1`. You can override this with a YAML
@@ -94,7 +93,7 @@ postgres:
 ```
 
 
-### `managed_roles_query`
+### `postgres:managed_roles_query`
 
 The SQL query to list the name of managed roles. ldap2pg restricts role
 deletion and privilege edition to managed roles. Usualy, this query returns
@@ -119,7 +118,7 @@ postgres:
 ```
 
 
-### `owners_query`
+### `postgres:owners_query`
 
 The SQL query to global list the names of object owners. ldap2pg execute this
 query *once*, after all roles are created, before granting and revoking
@@ -138,7 +137,7 @@ You can declare per-schema owners with `schemas_query`. However, unlike
 `owners_query`, `schemas_query` is executed *before* creating users.
 
 
-### `roles_blacklist_query`
+### `postgres:roles_blacklist_query`
 
 The SQL query returning name and glob pattern to blacklist role from
 management. ldap2pg won't touch anything on these roles.
@@ -156,7 +155,7 @@ Beware that `*suffix` is a YAML reference. You must quote pattern beginning
 with `*`.
 
 
-### `roles_query`
+### `postgres:roles_query`
 
 The SQL query returning all roles, their options and their members. It's not
 very useful to customize this. Prefer configure `roles_blacklist_query` and
@@ -181,7 +180,7 @@ postgres:
 ```
 
 
-### `schemas_query`
+### `postgres:schemas_query`
 
 The SQL query returning the name of schemas in a database. ldap2pg execute this
 query on each databases returned by `databases_query`. ldap2pg loops on objects
@@ -248,7 +247,7 @@ issue if you need a builtin privilege, and share your work. This will increase
 the quality of privilege handling in ldap2pg.
 
 
-### `type`
+### `privileges:*:type`
 
 Privilege can be of different kind. The type of privilege influence whether
 ldap2pg should loops on databases, schemas or owners roles. This influences
@@ -263,7 +262,7 @@ privileges:
 See [Privilege documentation](privileges.md) for details.
 
 
-### `inspect`
+### `privileges:*:inspect`
 
 The SQL query to inspect grants of this privilege in the cluster. This
 signature of tuples returned by this query varies after privilege type. This
@@ -281,7 +280,7 @@ This is the trickiest query to write when synchronizing privileges. See
 [Privilege documentation](privileges.md) for details.
 
 
-### `grant`
+### `privileges:*:grant`
 
 SQL query to grant a privilege to a role. Some parameters are injected in this
 query using mustache substitution like `{role}`. Parameters depends on
@@ -299,7 +298,7 @@ privileges:
 See [Privilege documentation](privileges.md) for details.
 
 
-### `revoke`
+### `privileges:*:revoke`
 
 Just like `grant` ; the SQL query to revoke a privilege from a role. Parameters
 are substituted with mustache syntax like `{role}` and depends on privilege
@@ -334,7 +333,7 @@ The `ldap` subsection is optional. You can define roles and grants without
 querying a directory.
 
 
-### `ldap` directive
+### `sync_map:ldap` directive
 
 This directive defines LDAP search parameters. Not to be confused with
 top-level `ldap` section defining LDAP connexion parameters.
@@ -361,7 +360,7 @@ ldap2pg infers attributes from role and grant directives. You don't have to
 define them in `ldap` search directive.
 
 
-### `joins`
+### `sync_map:ldap:joins`
 
 Customize sub-query. In some case, ldap2pg needs to issue a sub-query to
 further access attributes of an LDAP entry referenced in a top-level entry.
@@ -387,7 +386,7 @@ each value of `member`. Again, ldap2pg infers attributes of sub-queries.
 See [Querying LDAP](ldap.md) for details.
 
 
-### `on_unexpected_dn`
+### `sync_map:ldap:on_unexpected_dn`
 
 Sometimes, an attribute references another entry in LDAP rather than specifying
 a value. This mixed types attributes are hard to handle and must be avoided.
@@ -403,7 +402,7 @@ sync_map:
 ```
 
 
-### `role` rule
+### `sync_map:role` rule
 
 Define one or more roles wanted in the cluster. This includes name, options,
 comment and members. `roles` is an alias for this key. The value can be either
@@ -422,7 +421,7 @@ sync_map:
 ```
 
 
-### `name`
+### `sync_map:role:name`
 
 One or more role name wanted in the cluster. `names` is an alias for this
 parameter. The value can be either a single string or a list of strings. You
@@ -433,6 +432,17 @@ sync_map:
 - roles:
   - name: "{cn}"
 ```
+
+
+### `sync_map:role:name_match`
+
+### `sync_map:roles:parents`
+### `sync_map:roles:members`
+### `sync_map:grant`
+### `sync_map:grant:roles`
+### `sync_map:grant:privilege`
+### `sync_map:grant:databases`
+### `sync_map:grant:schemas`
 
 
 ## Shortcuts
